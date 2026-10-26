@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17191f" />
+  <meta name="description" content="DevWorkspace Pro — a browser-based coding workspace." />
+  <title>DevWorkspace Pro</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="frontend/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button mobile-only" id="menuToggle" aria-label="Toggle explorer"><i class="fa-solid fa-bars"></i></button>
+      <div class="brand"><span class="brand-mark"><i class="fa-solid fa-code"></i></span><span>DevWorkspace <b>Pro</b></span></div>
+      <div class="project-label" id="projectLabel">untitled-project</div>
+      <div class="top-actions">
+        <button class="button secondary" id="authBtn" title="Sign in or create account"><i class="fa-regular fa-user"></i><span id="authBtnLabel">Sign in</span></button>
+        <button class="button secondary" id="connectServerBtn" title="Connect to a DevWorkspace backend"><i class="fa-solid fa-cloud"></i><span>Connect</span></button>
+        <button class="button secondary" id="projectsBtn" title="Open or create cloud projects"><i class="fa-solid fa-folder-tree"></i><span>Projects</span></button>
+        <button class="button secondary" id="newFileBtn"><i class="fa-regular fa-file"></i><span>New file</span></button>
+        <button class="button secondary" id="saveBtn"><i class="fa-solid fa-floppy-disk"></i><span>Save</span></button>
+        <button class="button primary" id="runBtn"><i class="fa-solid fa-play"></i><span>Run</span></button>
+        <button class="button secondary" id="previewBtn"><i class="fa-regular fa-eye"></i><span>Preview</span></button>
+        <button class="icon-button" id="themeBtn" title="Toggle theme"><i class="fa-regular fa-sun"></i></button>
+      </div>
+    </header>
+    <div class="workspace">
+      <nav class="activitybar" aria-label="Workspace views">
+        <button class="activity active" title="Explorer" data-view="explorer"><i class="fa-regular fa-folder-open"></i></button>
+        <button class="activity" title="Search" data-view="search"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <button class="activity" title="Source Control" data-view="git"><i class="fa-solid fa-code-branch"></i></button>
+        <button class="activity" title="Run and Debug" data-view="run"><i class="fa-solid fa-bug"></i></button>
+        <div class="activity-spacer"></div>
+        <button class="activity" id="aboutBtn" title="About"><i class="fa-regular fa-circle-user"></i></button>
+      </nav>
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-heading"><span id="sidebarTitle">EXPLORER</span><div><button class="tiny-icon" id="addFileBtn" title="New file"><i class="fa-regular fa-file"></i></button><button class="tiny-icon" id="importBtn" title="Import ZIP"><i class="fa-solid fa-file-import"></i></button></div></div>
+        <div class="project-heading"><i class="fa-solid fa-chevron-down"></i><span id="treeProjectName">UNTITLED-PROJECT</span><button class="tiny-icon" id="exportBtn" title="Export project"><i class="fa-solid fa-download"></i></button></div>
+        <div id="fileTree" class="file-tree"></div>
+        <div class="sidebar-bottom" id="connectionStatus"><span class="connection-dot"></span><span>Local workspace</span><span class="local-label">LOCAL</span></div>
+      </aside>
+      <main class="main-area">
+        <div class="tabs" id="tabs"><div class="empty-tab">Welcome</div></div>
+        <div class="editor-wrap"><div id="editor"></div><div id="editorEmpty" class="editor-empty"><div class="empty-logo"><i class="fa-solid fa-code"></i></div><h2>DevWorkspace Pro</h2><p>Select a file or create one to start coding.</p><div class="shortcut-list"><span><kbd>Ctrl</kbd> + <kbd>S</kbd> Save file</span><span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> Run / preview</span></div></div></div>
+        <section class="bottom-panel" id="bottomPanel">
+          <div class="panel-heading"><div class="panel-tabs"><button class="panel-tab active" data-panel="output">OUTPUT</button><button class="panel-tab" data-panel="problems">PROBLEMS <span class="count" id="problemCount">0</span></button><button class="panel-tab" data-panel="terminal">TERMINAL</button></div><button class="tiny-icon" id="hidePanelBtn" title="Hide panel"><i class="fa-solid fa-chevron-down"></i></button></div>
+          <div class="panel-content" id="panelContent"><div class="log-line"><span class="log-time">READY</span> DevWorkspace Pro frontend started.</div><div class="log-line muted">Note: terminal/runtime and Git backend are not connected in this starter build.</div></div>
+        </section>
+        <footer class="statusbar"><span><i class="fa-solid fa-code-branch"></i> main</span><span id="dirtyStatus">Saved locally</span><span class="status-spacer"></span><span id="cursorStatus">Ln 1, Col 1</span><span id="languageStatus">Plain Text</span><span id="encodingStatus">UTF-8</span></footer>
+      </main>
+      <aside class="preview-pane hidden" id="previewPane"><div class="preview-heading"><strong><i class="fa-regular fa-eye"></i> Preview</strong><button class="tiny-icon" id="closePreviewBtn"><i class="fa-solid fa-xmark"></i></button></div><iframe id="previewFrame" title="Project preview" sandbox="allow-scripts allow-forms"></iframe></aside>
+    </div>
+  </div>
+  <input type="file" id="zipInput" accept=".zip,application/zip" hidden />
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  <dialog id="authDialog" class="dialog"><form id="authForm"><div class="dialog-title">DevWorkspace Pro account</div><p id="authHelp">Sign in to access your private server workspace.</p><label for="authEmail">Email</label><input id="authEmail" class="text-input" type="email" autocomplete="email" required /><label for="authPassword">Password</label><input id="authPassword" class="text-input" type="password" autocomplete="current-password" minlength="8" required /><p id="authMessage" role="status"></p><div class="dialog-actions"><button type="button" class="button secondary" id="authModeBtn">Create account</button><button type="button" class="button secondary" id="authCancelBtn">Cancel</button><button type="submit" class="button primary" id="authSubmitBtn">Sign in</button></div><button type="button" class="button secondary hidden" id="authLogoutBtn">Sign out</button></form></dialog>
+  <dialog id="newFileDialog" class="dialog"><form method="dialog" id="newFileForm"><div class="dialog-title">Create file</div><label for="fileNameInput">File name</label><input id="fileNameInput" class="text-input" placeholder="index.html" required maxlength="120" /><div class="dialog-actions"><button class="button secondary" value="cancel">Cancel</button><button class="button primary" id="createFileConfirm" value="default">Create file</button></div></form></dialog>
+  <dialog id="searchDialog" class="dialog"><form method="dialog"><div class="dialog-title">Search files</div><label for="searchInput">Find text in project</label><input id="searchInput" class="text-input" placeholder="Search code…" /><div id="searchResults" class="search-results"></div><div class="dialog-actions"><button class="button secondary">Close</button></div></form></dialog>
+  <dialog id="aboutDialog" class="dialog"><form method="dialog"><div class="dialog-title">About DevWorkspace Pro</div><p>This is Milestone 1: a browser IDE foundation with local file editing, autosave, preview, and ZIP import/export.</p><p class="notice">A real shell terminal, server-side runtime, remote filesystem, and Git push/pull require a secured backend and are not implemented in this frontend-only milestone.</p><div class="dialog-actions"><button class="button primary">Got it</button></div></form></dialog>
+  <script type="module" src="frontend/main.js"></script>
+</body>
+</html>
