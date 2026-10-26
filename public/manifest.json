@@ -1,0 +1,10 @@
+{
+  "name": "DevWorkspace Pro",
+  "short_name": "DevWorkspace",
+  "description": "A browser-based coding workspace starter.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#17191f",
+  "theme_color": "#17191f",
+  "icons": []
+}
